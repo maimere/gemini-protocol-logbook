@@ -1,4 +1,4 @@
-A CGI script for Gemini protocol servers, written in GNU AWK. It enables users to retrieve and display logbook entries from a text file based on a date specified in the URL. Think of it as a lightweight tool for serving date-specific logbook content over the Gemini protocol.
+A CGI script to manage a logbook for Gemini protocol servers, written in GNU AWK. It enables users to retrieve and display logbook entries from a text file based on a date specified in the URL. Think of it as a lightweight tool for serving date-specific logbook content over the Gemini protocol.
 
 ## Features
 - Date-Based Retrieval: Extracts a date from the URL's PATH_INFO (e.g., /YYYY-MM-DD) to fetch the corresponding logbook entry.
