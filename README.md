@@ -7,6 +7,7 @@ A CGI script to manage a logbook for Gemini protocol servers, written in GNU AWK
 - Entry Display: Shows the title and full content of the logbook entry matching the requested date.
 - Fallback Behavior: If no entry matches the date, displays a list of all available logbook entries with clickable Gemini links.
 - Link Generation: Automatically creates Gemini links for each logbook entry, enhancing navigation.
+- Atom feed: atom.xml script creates an automated Atom feed for your logbook.
 
 ## Logbook File Format
 The script expects a logbook file in the following format:
