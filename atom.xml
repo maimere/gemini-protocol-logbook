@@ -1,0 +1,61 @@
+#!/bin/gawk -E
+# -E command-line option may avoid exploitation of the CGI script
+# https://www.gnu.org/software/gawk/manual/gawk.html#index-_002dE-option
+
+
+#    Copyright (C) 2025  Pedro Maimere
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+# This is a CGI script that automates the creation of the ATOM feed of your logbook.
+# Keep it executable and inside the cgi-bin directory.
+# For example: gemini://domain.example/cgi-bin/atom.xml
+
+BEGIN {
+    ARGC++
+    ARGV[ARGC - 1] = "/path-to/logbook-entries"
+}
+
+/^#### / {
+    dates[++entry_count] = substr($0,6,10)
+    titles[entry_count] = substr($0,17)
+}
+
+END {
+    print "20 application/atom+xml\r"
+
+    print "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+    print "<feed xmlns=\"http://www.w3.org/2005/Atom\">"
+
+    print "  <title>Your capsule title</title>"
+    print "  <link href=\"gemini://domain.example/cgi-bin/logbook/\"/>"
+    print "  <updated>" dates[1] "T12:00:00Z</updated>"
+    print "  <id>gemini://domain.example/cgi-bin/logbook/</id>"
+
+    for (i in dates) {
+        print_entry(dates[i], titles[i])
+    }
+
+    print "</feed>"
+}
+
+function print_entry(date, title) {
+    print "  <entry>"
+    print "    <title>" title "</title>"
+    print "    <link rel=\"alternate\" href=\"gemini://domain.example/cgi-bin/logbook/" date "\"/>"
+    print "    <id>gemini://domain.example/cgi-bin/logbook/" date "</id>"
+    print "    <updated>" date "T12:00:00Z</updated>"
+    print "  </entry>"
+}
