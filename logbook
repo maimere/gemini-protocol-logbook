@@ -1,0 +1,104 @@
+#!/bin/gawk -E
+# -E command-line option may avoid exploitation of the CGI script
+# https://www.gnu.org/software/gawk/manual/gawk.html#index-_002dE-option
+
+
+#    Copyright (C) 2025  Pedro Maimere
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+# This is meant to be a CGI script. Make it executable and move it to the
+# configured 'cgi-bin' directory of yout Gemini server.
+
+# Remember to keep your logbook-entries file correctly formatted.
+# Each logbook entry start with the header "#### YYYY-MM-DD TITLE"
+
+BEGIN {
+    # Sets logbook file as input
+    # ARGV array starts at 0, hence the "-1"
+    ARGC++
+    ARGV[ARGC - 1] = "/path-to/logbook-entries" 
+
+    # PATH_INFO environment variable given by server running cgi script,
+    # which should return /YYYY-MM-DD for the URL gemini://domain.example/cgi-bin/logbook/YYYY-MM-DD
+    date = substr(ENVIRON["PATH_INFO"], 2, 10)
+
+    # Is it even a date? (loose date regex)
+    if ( (date) && (date !~ /20[0-9]{2}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])/) ) {
+        arg_not_date = 1
+        print "30 /goto/logbook\r"
+        exit 1
+    }
+
+    # Number of entries found
+    entry_count = 0
+
+    # Will be set 1 when the log of the date starts to be read
+    on_entry = 0
+
+    # Has the wanted entry ever been found?
+    entry_found = 0
+}
+
+# Pattern that matches every entry header
+/^#### / {
+    titles[++entry_count] = substr($0,6)
+}
+
+# Pattern that matches the header of the wanted entry
+/^#### / && (substr($0,6,10) == date) {
+    header()
+    print "## Journal entry from " date ":"
+
+    on_entry = 1
+    entry_found = 1
+
+    # Removes date and sets h3 of gemtext
+    $0 = "### " substr($0,17)
+}
+
+# Pattern that matches the entry header of the entry immediately after the wanted entry
+/^#### / && on_entry {
+    on_entry = 0
+}
+
+# Pattern that matches every line of text of the wanted entry
+on_entry
+
+
+function header() {
+    print "20 text/gemini\r"
+    print "# My logbook"
+}
+
+END {
+    # Exiting because of redirection
+    if (arg_not_date) exit 1
+
+    if ( (entry_found == 0) && (date) ) {
+        header()
+        print "## No entry found for " date
+    }
+    else if ( (entry_found == 0) && (!date) ) {
+        header()
+    }
+
+    print "\n## All entries:"
+
+    for (i in titles) {
+        i_date = substr(titles[i],1,10)
+        print "=> gemini://domain.example/cgi-bin/logbook/" i_date " " titles[i]
+    }
+}
